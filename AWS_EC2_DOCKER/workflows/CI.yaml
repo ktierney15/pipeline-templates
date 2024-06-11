@@ -1,0 +1,119 @@
+name: CI
+on:
+  push: 
+    branches: ["main"]
+  pull_request:
+    branches: [ "main", "develop" ]
+  workflow_dispatch:
+
+  
+
+jobs:
+  React-Build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up NodeJS environment
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: Install package dependencies
+        run: npm install
+      
+      - name: Build and Lint
+        run: npm run build
+
+  Terraform-Build:
+    needs: React-Build
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.14.0
+
+      - name: Terraform Init and Plan
+        run: |
+          cd IAC
+          terraform init
+          terraform plan
+
+  Version-and-Publish:
+    needs: Terraform-Build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Sign in to Git
+        run: |
+          echo -n "machine github.com login ktierney15 password ${{ secrets.TOKEN }}" > ~/.netrc
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global credential.helper 'store --file ~/.git-credentials'
+
+      - name: Get Latest Tag
+        id: get-latest-tag
+        run: echo "::set-output name=TAG::$(git describe --tags --abbrev=0)"
+
+      - name: Get commit message
+        run: |
+          MERGE_COMMIT_SHA=$(git log --merges --pretty=format:'%H' -n 1)
+          echo "commit_message=$(git log --format=%s -n 1 $MERGE_COMMIT_SHA)" >> $GITHUB_ENV
+
+      - name: Set increment type variable
+        run: |
+          if [[ "${{ env.commit_message }}" == *"PATCH"* ]]; then
+            echo "version_increment_type=patch" >> $GITHUB_ENV 
+          elif [[ "${{ env.commit_message }}" == *"MAJOR"* ]]; then
+            echo "version_increment_type=major" >> $GITHUB_ENV 
+          else
+            echo "version_increment_type=minor" >> $GITHUB_ENV
+          fi
+      
+      - name: Semantic Versioning
+        run: echo "updated_tag=$(python3 .github/scripts/sem-ver.py ${{ env.version_increment_type }} ${{ steps.get-latest-tag.outputs.TAG }})" >> $GITHUB_ENV
+
+      - name: Tag new version
+        run: |
+          git tag ${{ env.updated_tag }}
+          git push origin --tags
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        if: ${{ env.version_increment_type == 'major' }}
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ github.events.repository.name }}:${{ env.updated_tag }}
+
+      - name: Build and push LATEST
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ github.events.repository.name }}:latest
+

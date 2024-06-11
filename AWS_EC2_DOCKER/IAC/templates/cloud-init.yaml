@@ -1,0 +1,24 @@
+#cloud-config
+
+# swap:
+#   filename: /swap.img
+#   size: auto
+#   maxsize: 4294967296
+
+write-files:
+  - path: /run/app-name/playbook.ansible.yaml
+    owner: root:root
+    premissions: "0644"
+    encoding: b64
+    content: ${playbook}
+  - path: /run/app-name/playbook.vars.json
+    owner: root:root
+    premissions: "0644"
+    encoding: b64
+    content: ${playbook_vars}
+
+
+runcmd:
+  - yum -y update
+  - yum install ansible
+  - ansible-playbook -c local -i localhost, --extra-vars @/run/app-name/playbook.vars.json /run/app-name/playbook.ansible.yaml

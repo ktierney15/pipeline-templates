@@ -1,0 +1,103 @@
+- name: Deploy Application
+  hosts: localhost
+  connection: local
+  become: true
+
+tasks:
+#  expose port to the internet so applciation can be reached
+  - name: Add iptables rule to allow incoming traffic on port 80
+      iptables:
+        chain: INPUT
+        in_interface: any
+        protocol: tcp
+        destination_port: 80
+        jump: ACCEPT
+
+  - name: Save iptables rules
+    command: service iptables save
+    become: yes
+
+  - name: Restart iptables service
+    systemd:
+      name: iptables
+      state: restarted
+
+# download and run applicaiton 
+  - name: Install Docker
+    package:
+      name: docker
+      state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+
+    - name: Log in to Docker Hub
+      docker_login:
+        username: {{ dockerhub_user }}
+        password: {{ dockerhub_password }}
+
+    - name: Pull Docker image
+      docker_image:
+        name: account/- name: Deploy Application
+  hosts: localhost
+  connection: local
+  become: true
+
+tasks:
+#  expose port to the internet so applciation can be reached
+  - name: Add iptables rule to allow incoming traffic on port 80
+      iptables:
+        chain: INPUT
+        in_interface: any
+        protocol: tcp
+        destination_port: 80
+        jump: ACCEPT
+
+  - name: Save iptables rules
+    command: service iptables save
+    become: yes
+
+  - name: Restart iptables service
+    systemd:
+      name: iptables
+      state: restarted
+
+# download and run applicaiton 
+  - name: Install Docker
+    package:
+      name: docker
+      state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+
+    - name: Log in to Docker Hub
+      docker_login:
+        username: {{ dockerhub_user }}
+        password: {{ dockerhub_password }}
+
+    - name: Pull Docker image
+      docker_image:
+        name: account/app-name:latest
+        source: pull
+
+    - name: Run Docker container
+      docker_container:
+        name: app-name
+        image: account/app-name:latest
+        state: started
+        ports:
+          - "3000:80":latest
+        source: pull
+
+    - name: Run Docker container
+      docker_container:
+        name: app-name
+        image: account/app-name:latest
+        state: started
+        ports:
+          - "3000:80"
