@@ -146,9 +146,6 @@ Resources:
 # have 2 subnets in different azs in that vpc (all same region us-east-1)
 
 # validate certificate while its uploading
-# https://github.com/aaronwht/aws-ecs-typescript/blob/main/ecs-2.yml
-# https://www.youtube.com/watch?v=eaS1jza_hy0&list=TLPQMDYwNjIwMjRBSdRl7WRAiQ&index=6
-
 
 # aws cloudformation create-stack --stack-name devops-portfolio --template-body file://template1.yaml --capabilities CAPABILITY_NAMED_IAM \
 # --parameters ParameterKey=VPCID,ParameterValue=vpc-040d5276b0e9ee82b \

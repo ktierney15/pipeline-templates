@@ -29,6 +29,3 @@ jobs:
         run: |
           aws ec2 delete-security-group --group-id ${{ env.sgID }}
           aws ec2 terminate-instances --instance-ids ${{ env.ec2ID }}
-
-
-      # TODO: Add route53 dns deletion step when tis added
