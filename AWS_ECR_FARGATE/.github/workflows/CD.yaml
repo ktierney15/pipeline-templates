@@ -22,11 +22,6 @@ jobs:
   Deploy:
     needs: Pre-Check
     runs-on: ubuntu-latest
-    env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          TF_VAR_docker_user: ${{ secrets.DOCKER_USERNAME }}
-          TF_VAR_docker_pass: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
       - name: print name

@@ -120,10 +120,10 @@ Resources:
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
+        # - IpProtocol: tcp
+        #   FromPort: 80
+        #   ToPort: 80
+        #   CidrIp: 0.0.0.0/0
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -186,10 +186,11 @@ Resources:
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
-          CidrIp: 0.0.0.0/0
+          # only uncomment this when testing
+        # - IpProtocol: tcp
+        #   FromPort: 8080
+        #   ToPort: 8080
+        #   CidrIp: 0.0.0.0/0
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -249,11 +250,3 @@ Resources:
       AliasTarget:
         HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
         DNSName: !GetAtt LoadBalancer.DNSName
-
-# aws cloudformation update-stack --stack-name STACK_NAME --template-body file://template2.yml --capabilities CAPABILITY_NAMED_IAM \
-# --parameters ParameterKey=VPCID,ParameterValue=YOUR_VPC_ID \
-# ParameterKey=Subnet1ID,ParameterValue=YOUR_SUBNET_1_ID \
-# ParameterKey=Subnet2ID,ParameterValue=YOUR_SUBNET_2_ID \
-# ParameterKey=DomainName,ParameterValue=YOUR_DOMAIN_NAME.com \
-# ParameterKey=Image,ParameterValue=YOUR_IMAGE \
-# ParameterKey=Name,ParameterValue=YOUR_RESOURCE_NAME 

@@ -140,20 +140,3 @@ Resources:
       SecurityGroups:
         - !GetAtt LoadBalancerSecurityGroup.GroupId
 
-# prerequisites
-# create a domain in route53
-# have a vpc
-# have 2 subnets in different azs in that vpc (all same region us-east-1)
-
-# validate certificate while its uploading
-
-# aws cloudformation create-stack --stack-name devops-portfolio --template-body file://template1.yaml --capabilities CAPABILITY_NAMED_IAM \
-# --parameters ParameterKey=VPCID,ParameterValue=vpc-040d5276b0e9ee82b \
-# ParameterKey=Subnet1ID,ParameterValue=subnet-00a4de9e89b569f4c \
-# ParameterKey=Subnet2ID,ParameterValue=subnet-0a912855fccdfd56f \
-# ParameterKey=DomainName,ParameterValue=kevin-tierney.com \
-# ParameterKey=Image,ParameterValue=219602441448.dkr.ecr.us-east-1.amazonaws.com/devops-portfolio:latest \
-# ParameterKey=Name,ParameterValue=devops-portfolio 
-
-
-# try updating the image directly and seeing if it updates if not add the bottom section of the workflow
