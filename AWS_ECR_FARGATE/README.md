@@ -24,7 +24,7 @@ aws ecr create-repository \
     --region MY_AWS_REGION
 ```
 
-2. Copy the following into your repository
+2. Copy the following into your Github repository
 - .github folder
 - templates folder
 - Dockerfile (or create your own)
@@ -33,7 +33,7 @@ aws ecr create-repository \
 3. add templates/* to your .gitignore file
 
 4. Make sure the following resources exist in AWS:
-- An AWS VPC
+- A VPC
 - 2 subnets in that VPC (in two different availability zones)
 - a route53 DNS record
 - your ECR repository that you created in step 1

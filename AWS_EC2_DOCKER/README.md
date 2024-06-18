@@ -29,13 +29,13 @@ Since I am only working with one environment I decided I want to manually trigge
 
 ### Onboarding
 1. add the .github and IAC folders to your repository
-2. create a Dockerhub repository to push your images to (and name it after your repository)
+2. create a Dockerhub repository to push your images to (and name it after your Github repository)
 3. create a Dockerfile - there is an example in this repository but it can be whatever you want it to be
 4. replace "app-name" with your application in the clout init template (or parameterize it if you choose)
 5. replace "app-name" with your application in the ansible playbook (or parameterize it if you choose)
-6. replace anything you need to in the ansible playbook or terraform module
-    examples:
-        - change the port mappings if need be in the ansible playbook
+6. replace anything you need to in the ansible playbook or terraform module  
+    examples:   
+        - change the port mappings if need be in the ansible playbook  
         - change your AWS region or ami id
 
 #### Optional
