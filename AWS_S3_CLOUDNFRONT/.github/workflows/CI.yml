@@ -1,0 +1,58 @@
+name: CI
+on:
+  push: 
+    branches: ["main"]
+  pull_request:
+    branches: [ "main", "develop" ]
+  workflow_dispatch:
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+  Version-and-Publish:
+    needs: Build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Sign in to Git
+        run: |
+          echo -n "machine github.com login ktierney15 password ${{ secrets.TOKEN }}" > ~/.netrc
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global credential.helper 'store --file ~/.git-credentials'
+
+      - name: Get Latest Tag
+        id: get-latest-tag
+        run: echo "::set-output name=TAG::$(git describe --tags --abbrev=0)"
+
+      - name: Get commit message
+        run: |
+          MERGE_COMMIT_SHA=$(git log --merges --pretty=format:'%H' -n 1)
+          echo "commit_message=$(git log --format=%s -n 1 $MERGE_COMMIT_SHA)" >> $GITHUB_ENV
+
+      - name: Set increment type variable
+        run: |
+          if [[ "${{ env.commit_message }}" == *"PATCH"* ]]; then
+            echo "version_increment_type=patch" >> $GITHUB_ENV 
+          elif [[ "${{ env.commit_message }}" == *"MAJOR"* ]]; then
+            echo "version_increment_type=major" >> $GITHUB_ENV 
+          else
+            echo "version_increment_type=minor" >> $GITHUB_ENV
+          fi
+      
+      - name: Semantic Versioning
+        run: echo "updated_tag=$(python3 .github/scripts/sem-ver.py ${{ env.version_increment_type }} ${{ steps.get-latest-tag.outputs.TAG }})" >> $GITHUB_ENV
+
+      - name: Tag new version
+        run: |
+          git tag ${{ env.updated_tag }}
+          git push origin --tags
