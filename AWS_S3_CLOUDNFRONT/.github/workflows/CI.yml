@@ -7,13 +7,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  Build:
+  React-Build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build React App
+        run: npm run build
+
   Version-and-Publish:
-    needs: Build
+    needs: React-Build
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     steps:
@@ -56,3 +67,4 @@ jobs:
         run: |
           git tag ${{ env.updated_tag }}
           git push origin --tags
+          
