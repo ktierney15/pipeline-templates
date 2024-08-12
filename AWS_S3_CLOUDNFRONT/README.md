@@ -15,3 +15,24 @@ CD will build your application again and deploy the build to an s3 bucket, as we
 4. Buy a AWS route53 domain name then save the following values to your repository variables
     - DOMAIN_NAME
     - ROUTE53_ZONE_ID
+
+
+## CI steps
+- checkout - checks out code
+- setup node / install dependencies / build - builds react application (can be interchanged with a different type of statically hosted framework i.e. Angular) 
+- sign in to git / get tag - gets the latest tag
+- get commit message - parses merge commit message for MAJOR, MINOR, or PATCH
+- set increment type - sets variable based off of the commit message
+- semantic Versioning - determines new version
+- tag new version - tags the new version
+
+## CD steps
+- pre-check - checks to see if you are running the pipeline from a proper version that is tagged (and not a branch)
+- checkout - checks out repository based on specified ref
+- setup node / install dependencies / build / move build to IAC folder - re-builds application for deployment and moves it to be consumed by terraform
+- setup terraform - installs terraform
+- configure AWS credentials - signs into AWS
+- initialize terraform - terraform init (initializes terraform)
+- validate terraform - terraform validate (validates syntax)
+- plan terraform - runs a terraform plan (makes sure your terraform will build and generates a plan.tfplan file)
+- apply terraform - executes terraform plan
