@@ -17,7 +17,7 @@ locals {
 terraform {
   backend "s3" {
     bucket = "kt15-terraform-state-files"
-    key    = "devops-portfolio/terraform.tfstate"
+    key    = YOUR_PATH/TO_YOUR_STATE_FILE
     region = "us-east-1"
   }
 }
