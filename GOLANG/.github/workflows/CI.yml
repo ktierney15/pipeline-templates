@@ -1,0 +1,89 @@
+name: CI
+on:
+  # push:
+  #   branches: [main]
+  #   paths-ignore:
+  #     - 'README.md'
+  #     - '.github/**'
+  #     - '.gitignore'
+  # pull_request:
+  #   branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.24.2
+      
+      # - name: Cache Go modules
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       ~/.cache/go-build
+      #       ~/go/pkg/mod
+      #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Run tests
+        run: go test -v ./...
+
+  Version-and-Publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Get Latest Tag
+        id: get-latest-tag
+        run: echo "::set-output name=TAG::$(git describe --tags --abbrev=0)"
+
+      - name: Get commit message
+        run: |
+          MERGE_COMMIT_SHA=$(git log --merges --pretty=format:'%H' -n 1)
+          echo "commit_message=$(git log --format=%s -n 1 $MERGE_COMMIT_SHA)" >> $GITHUB_ENV
+
+      - name: Set increment type variable
+        run: |
+          if [[ "${{ env.commit_message }}" == *"PATCH"* ]]; then
+            echo "version_increment_type=patch" >> $GITHUB_ENV 
+          elif [[ "${{ env.commit_message }}" == *"MAJOR"* ]]; then
+            echo "version_increment_type=major" >> $GITHUB_ENV 
+          else
+            echo "version_increment_type=minor" >> $GITHUB_ENV
+          fi
+      
+      - name: Semantic Versioning
+        run: echo "updated_tag=$(python3 .github/scripts/sem-ver.py ${{ env.version_increment_type }} ${{ steps.get-latest-tag.outputs.TAG }})" >> $GITHUB_ENV
+
+      - name: Tag new version
+        run: |
+          git tag ${{ env.updated_tag }}
+          git push origin ${{ env.updated_tag }}

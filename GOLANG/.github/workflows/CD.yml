@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  Pre-Check:
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v3
+      
+      - name: Get Branch or Tag Name
+        run: echo "REF_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//_/')" >> $GITHUB_ENV
+
+      - name: Check if ref is a tag
+        run: |
+          if [[ -z "${REF_NAME}" ]]; then
+            echo "Please run the pipeline from a tagged version."
+            exit 1
+          fi
+          
+  release:
+    runs-on: ubuntu-latest
+    needs: Pre-Check
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.24.2
+
+      - name: Build binaries for multiple platforms
+        run: |
+          mkdir -p dist
+          GOOS=linux GOARCH=amd64 go build -o dist/${{ github.event.repository.name }}-linux ./cmd/${{ github.event.repository.name }}
+          GOOS=darwin GOARCH=amd64 go build -o dist/${{ github.event.repository.name }}-mac-intel ./cmd/${{ github.event.repository.name }}
+          GOOS=darwin GOARCH=arm64 go build -o dist/${{ github.event.repository.name }}-mac ./cmd/${{ github.event.repository.name }}
+          GOOS=windows GOARCH=amd64 go build -o dist/${{ github.event.repository.name }}-windows.exe ./cmd/${{ github.event.repository.name }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*
+          token: ${{ secrets.GITHUB_TOKEN }}
