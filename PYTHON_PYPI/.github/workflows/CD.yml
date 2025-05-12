@@ -1,0 +1,46 @@
+name: CD
+on:
+  workflow_dispatch:
+  
+jobs:
+  Pre-Check:
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v3
+      
+      - name: Get Branch or Tag Name
+        run: echo "REF_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//_/')" >> $GITHUB_ENV
+
+      - name: Check if ref is a tag
+        run: |
+          if [[ -z "${REF_NAME}" ]]; then
+            echo "Please run the pipeline from a tagged version."
+            exit 1
+          fi
+
+  Deploy:
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v3
+
+      - name: Setup UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo 'export PATH="$HOME/.local/bin:$PATH' >> $GITHUB_ENV
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.13'
+      
+      - name: Setup virtual environment
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          uv pip install -e .
+      
+      - name: Build
+        run: uv build
+
+      - name: Publish to PyPi
+        run: uv publish --username "__token__" --password "${{ secrets.PYPI_TOKEN }}"
