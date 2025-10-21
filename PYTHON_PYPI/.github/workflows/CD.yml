@@ -20,6 +20,7 @@ jobs:
 
   Deploy:
     runs-on: ubuntu-latest
+    needs: Pre-Check
     steps: 
       - uses: actions/checkout@v3
 
